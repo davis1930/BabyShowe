@@ -6,7 +6,6 @@
     <title>Invitación Baby Shower</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@300;400;500;600;700&family=Dancing+Script:wght@400;700&display=swap" rel="stylesheet">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.min.js"></script>
     <style>
         body {
             font-family: 'Quicksand', sans-serif; /* Nueva fuente para el cuerpo */
@@ -260,11 +259,16 @@
             <div class="dots-container" id="dotsContainer">
                 </div>
 
+            <audio id="backgroundMusic" loop>
+                <source src="cancion.mp3" type="audio/mpeg">
+                Tu navegador no soporta la reproducción de audio.
+            </audio>
+
             <button id="musicToggleBtn" class="music-button">🎵</button>
 
             <div class="card active" id="card-1">
                 <div class="bunny-image-frame">
-                    <img src="uploaded:75dcc599f6b02afeb7699c74c686705c.jpg-a3a5c37f-ca7c-47be-b031-ae768fd3faaa" alt="Conejita con mariposa" class="bunny-image">
+                    <img src="c1.jpg" alt="Conejita con mariposa" class="bunny-image">
                 </div>
                 <h1 class="card-title">¡La Dulce Espera Está Por Terminar!</h1>
                 <p class="card-text">
@@ -275,18 +279,18 @@
 
             <div class="card" id="card-2">
                 <div class="bunny-image-frame">
-                    <img src="uploaded:a1ff789dffec134d87719c21a695ff9c.jpg-781ca591-970b-4213-b539-75c9ef83e9a7" alt="Conejita feliz con lazo" class="bunny-image">
+                    <img src="c2.jpg" alt="Conejita feliz con lazo" class="bunny-image">
                 </div>
-                <h1 class="card-title">¡Aleja y David Están Muy Felices!</h1>
+                <h1 class="card-title">¡Sus Papitos Aleja y David!</h1>
                 <p class="card-text">
-                    Sus papitos, Aleja y David, están muy felices y les gustaría que formes parte de este evento
+                    Están muy felices y les gustaría que formes parte de este evento
                     que harán en su honor para darle la bienvenida al mundo a su princesa.
                 </p>
             </div>
 
             <div class="card" id="card-3">
                 <div class="bunny-image-frame">
-                    <img src="uploaded:image_c90a71.jpg-c444d646-6f6c-45ee-8f59-2af0992059c4" alt="Conejita con flores" class="bunny-image">
+                    <img src="c3.jpg" alt="Conejita con flores" class="bunny-image">
                 </div>
                 <h1 class="card-title">¡Te Esperamos!</h1>
                 <p class="card-text">
@@ -302,8 +306,7 @@
 
             <div class="card" id="card-4">
                 <div class="bunny-image-frame">
-                    <img src="uploaded:79edd64efa5a15a3469567e8f913d768.jpg-6a387836-22ff-435b-9ecd-b55a0918c084" alt="Conejita con corona de flores y corazones" class="bunny-image">
-                </div>
+                    <img src="c3.jpg" alt="Conejita con corona de flores y corazones" class="bunny-image"> </div>
                 <h1 class="card-title">El Amor se Multiplica</h1>
                 <p class="card-text">
                     En la familia habrá una sonrisa iluminando nuestras vidas.
@@ -314,7 +317,7 @@
 
             <div class="card" id="card-5">
                 <div class="bunny-image-frame">
-                    <img src="uploaded:image_c98dba.png-d568f845-fe27-4b11-b841-8ceca40ad716" alt="Conejita bebé con mariposa" class="bunny-image">
+                    <img src="c4.png" alt="Conejita bebé con mariposa" class="bunny-image">
                 </div>
                 <h1 class="card-title" style="font-size: 3rem; color: #d89696;">Ela</h1>
                 <p class="card-text">
@@ -335,8 +338,11 @@
         const nextBtn = document.getElementById('nextBtn');
         const dotsContainer = document.getElementById('dotsContainer');
         const addToCalendarBtn = document.getElementById('addToCalendarBtn');
-        const musicToggleBtn = document.getElementById('musicToggleBtn'); // Botón de música
+        const musicToggleBtn = document.getElementById('musicToggleBtn');
+        const backgroundMusic = document.getElementById('backgroundMusic');
         let currentCardIndex = 0;
+        let isPlaying = false;
+        let hasInteractedForMusic = false; // Nueva bandera para controlar la primera interacción
 
         // Detalles del evento para el calendario
         const eventTitle = "Baby Shower de Ela";
@@ -346,120 +352,73 @@
         const eventTimeStart = "150000"; // HHMMSS (3:00 PM)
         const eventTimeEnd = "170000"; // HHMMSS (5:00 PM, 2 horas después)
 
-        // --- Configuración de Tone.js para la música ---
-        // Añadir un efecto de reverberación
-        const reverb = new Tone.Reverb({
-            decay: 2.5,    // Duración de la cola de reverberación en segundos (un poco más larga)
-            preDelay: 0.05, // Retraso antes de que comience la reverberación
-            wet: 0.5     // Cantidad de señal "húmeda" (reverberada) (un poco más presente)
-        }).toDestination();
-
-        // Conectar el sintetizador a la reverberación y luego al destino
-        let synth = new Tone.Synth({
-            oscillator: {
-                type: "sine" // Cambiado a "sine" para un sonido más suave y puro
-            },
-            envelope: {
-                attack: 0.1,    // Ataque más lento para un inicio suave
-                decay: 0.8,     // Decaimiento más largo
-                sustain: 0.5,   // Sostenido moderado
-                release: 1.5    // Liberación más larga para una cola suave
+        // Nueva función para iniciar la música con la primera interacción
+        function tryPlayMusic() {
+            if (!hasInteractedForMusic) {
+                backgroundMusic.play().then(() => {
+                    isPlaying = true;
+                    musicToggleBtn.textContent = '⏸️'; // Cambia a icono de pausa
+                    hasInteractedForMusic = true; // Marca que la música ya intentó reproducirse
+                    document.removeEventListener('click', tryPlayMusic); // Elimina el listener una vez que la música comienza
+                }).catch(error => {
+                    console.warn("La reproducción de música fue bloqueada al primer clic:", error);
+                    isPlaying = false;
+                    musicToggleBtn.textContent = '🎵'; // Vuelve a icono de música si falla
+                    // No eliminamos el listener si falla, para que futuros clics puedan intentarlo.
+                });
             }
-        }).connect(reverb); // Conectar el sintetizador a la reverberación
+        }
 
-        let isPlaying = false;
-        let melodyPart;
+        // Agrega el listener al documento para el primer clic
+        document.addEventListener('click', tryPlayMusic);
 
-        // Definir una melodía dulce y armoniosa
-        const melody = [
-            // Frase 1 (C mayor)
-            { time: "0:0:0", note: "C4", duration: "4n", velocity: 0.8 },
-            { time: "0:0:2", note: "E4", duration: "8n", velocity: 0.7 },
-            { time: "0:1:0", note: "G4", duration: "4n", velocity: 0.8 },
-            { time: "0:1:2", note: "C5", duration: "8n", velocity: 0.9 },
-            { time: "0:2:0", note: "G4", duration: "4n", velocity: 0.8 },
-            { time: "0:2:2", note: "E4", duration: "8n", velocity: 0.7 },
-            { time: "0:3:0", note: "C4", duration: "2n", velocity: 0.9 }, // Nota más larga
-
-            // Frase 2 (G mayor, con un toque de D)
-            { time: "0:4:0", note: "D4", duration: "4n", velocity: 0.8 },
-            { time: "0:4:2", note: "F#4", duration: "8n", velocity: 0.7 }, // F# para G mayor
-            { time: "0:5:0", note: "A4", duration: "4n", velocity: 0.8 },
-            { time: "0:5:2", note: "D5", duration: "8n", velocity: 0.9 },
-            { time: "0:6:0", note: "A4", duration: "4n", velocity: 0.8 },
-            { time: "0:6:2", note: "F#4", duration: "8n", velocity: 0.7 },
-            { time: "0:7:0", note: "D4", duration: "2n", velocity: 0.9 }, // Nota más larga
-
-            // Frase 3 (regreso a C mayor y cierre)
-            { time: "0:8:0", note: "C4", duration: "4n", velocity: 0.8 },
-            { time: "0:8:2", note: "E4", duration: "8n", velocity: 0.7 },
-            { time: "0:9:0", note: "G4", duration: "4n", velocity: 0.8 },
-            { time: "0:9:2", note: "C5", duration: "8n", velocity: 0.9 },
-            { time: "0:10:0", note: "G4", duration: "4n", velocity: 0.8 },
-            { time: "0:10:2", note: "E4", duration: "8n", velocity: 0.7 },
-            { time: "0:11:0", note: "C4", duration: "1m", velocity: 1.0 } // Cierre largo y final
-        ];
-
-        // Crear una "parte" de Tone.js para la melodía que se repita
-        melodyPart = new Tone.Part((time, value) => {
-            synth.triggerAttackRelease(value.note, value.duration, time, value.velocity);
-        }, melody).start(0);
-
-        melodyPart.loop = true;
-        melodyPart.loopEnd = "12m"; // Ajustar la duración del loop a la nueva melodía
-
-        // Función para alternar la música
-        musicToggleBtn.addEventListener('click', async () => {
-            if (Tone.context.state !== 'running') {
-                await Tone.start(); // Iniciar el contexto de audio en el primer clic del usuario
-                console.log('Audio context started');
-            }
-
+        // Función para alternar la música con el botón específico
+        musicToggleBtn.addEventListener('click', (event) => {
+            event.stopPropagation(); // Evita que este clic active también el listener global si ya está activo
             if (isPlaying) {
-                Tone.Transport.pause();
+                backgroundMusic.pause();
                 musicToggleBtn.textContent = '🎵'; // Icono de música
             } else {
-                Tone.Transport.start();
-                musicToggleBtn.textContent = '⏸️'; // Icono de pausa
+                backgroundMusic.play().then(() => {
+                    musicToggleBtn.textContent = '⏸️'; // Icono de pausa
+                    hasInteractedForMusic = true; // Asegura que la bandera esté en true
+                    document.removeEventListener('click', tryPlayMusic); // Elimina el listener global si aún no se ha hecho
+                }).catch(error => {
+                    console.error("Error al intentar reproducir la música desde el botón:", error);
+                    alert("Para escuchar la música, por favor asegúrate de que el navegador lo permita (algunos requieren una interacción manual adicional).");
+                });
             }
             isPlaying = !isPlaying;
         });
 
         // Función para mostrar la tarjeta actual
         function showCard(index) {
-            const prevCard = cards[currentCardIndex]; // Obtener la tarjeta activa actualmente
-            const nextCard = cards[index]; // Obtener la tarjeta a mostrar
+            const prevCard = cards[currentCardIndex];
+            const nextCard = cards[index];
 
-            if (!prevCard || !nextCard || prevCard === nextCard) return; // Prevenir errores y no hacer nada si es la misma tarjeta
+            if (!prevCard || !nextCard || prevCard === nextCard) return;
 
-            // Determinar la dirección para la animación de deslizamiento
-            const incomingDirection = index > currentCardIndex ? '100%' : '-100%'; // La nueva tarjeta viene de la derecha/izquierda
-            const outgoingDirection = index > currentCardIndex ? '-100%' : '100%'; // La tarjeta antigua va a la izquierda/derecha
+            const incomingDirection = index > currentCardIndex ? '100%' : '-100%';
+            const outgoingDirection = index > currentCardIndex ? '-100%' : '100%';
 
-            // 1. Preparar la tarjeta entrante (nextCard) para su posición inicial fuera de pantalla
-            nextCard.style.transition = 'none'; // Deshabilitar temporalmente la transición para posicionamiento instantáneo
-            nextCard.style.transform = `translateX(${incomingDirection})`; // Colocarla fuera de pantalla
-            nextCard.style.opacity = '0'; // Hacerla invisible
-            nextCard.style.zIndex = '2'; // Asegurar que estará encima cuando esté activa
+            nextCard.style.transition = 'none';
+            nextCard.style.transform = `translateX(${incomingDirection})`;
+            nextCard.style.opacity = '0';
+            nextCard.style.zIndex = '2';
 
-            // 2. Forzar un "reflow" para aplicar los estilos iniciales de nextCard inmediatamente
-            void nextCard.offsetWidth;
+            void nextCard.offsetWidth; // Reflow
 
-            // 3. Iniciar la transición para la tarjeta entrante
-            nextCard.style.transition = 'transform 0.8s ease-in-out, opacity 0.8s ease-in-out'; // Volver a habilitar la transición
-            nextCard.style.transform = 'translateX(0)'; // Deslizarla al centro
-            nextCard.style.opacity = '1'; // Aparecer gradualmente
-            nextCard.classList.add('active'); // Marcar como activa
+            nextCard.style.transition = 'transform 0.8s ease-in-out, opacity 0.8s ease-in-out';
+            nextCard.style.transform = 'translateX(0)';
+            nextCard.style.opacity = '1';
+            nextCard.classList.add('active');
 
-            // 4. Iniciar la transición para la tarjeta saliente (prevCard)
-            // Asegurar que prevCard vaya detrás y se deslice fuera
-            prevCard.style.zIndex = '1'; // Enviar inmediatamente la tarjeta antigua al fondo
-            prevCard.style.transition = 'transform 0.8s ease-in-out, opacity 0.8s ease-in-out'; // Aplicar transición
-            prevCard.style.transform = `translateX(${outgoingDirection})`; // Deslizarla fuera
-            prevCard.style.opacity = '0'; // Desvanecerla
-            prevCard.classList.remove('active'); // Quitar la clase activa
+            prevCard.style.zIndex = '1';
+            prevCard.style.transition = 'transform 0.8s ease-in-out, opacity 0.8s ease-in-out';
+            prevCard.style.transform = `translateX(${outgoingDirection})`;
+            prevCard.style.opacity = '0';
+            prevCard.classList.remove('active');
 
-            // 5. Actualizar el índice de la tarjeta actual y refrescar los elementos de navegación
             currentCardIndex = index;
             updateButtons();
             updateDots();
@@ -473,7 +432,7 @@
 
         // Función para crear y actualizar los puntos de navegación
         function updateDots() {
-            dotsContainer.innerHTML = ''; // Limpiar puntos existentes
+            dotsContainer.innerHTML = '';
             cards.forEach((_, i) => {
                 const dot = document.createElement('div');
                 dot.classList.add('dot');
@@ -481,7 +440,7 @@
                     dot.classList.add('active');
                 }
                 dot.addEventListener('click', () => {
-                    showCard(i); // Navegar a la tarjeta al hacer clic en el punto
+                    showCard(i);
                 });
                 dotsContainer.appendChild(dot);
             });
