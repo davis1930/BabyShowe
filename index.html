@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invitación Baby Shower</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@300;400;500;600;700&family=Dancing+Script:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.min.js"></script>
+    <style>
+        body {
+            font-family: 'Quicksand', sans-serif; /* Nueva fuente para el cuerpo */
+            background: linear-gradient(135deg, #fce4ec 0%, #f7e6e6 50%, #fce4ec 100%); /* Degradado suave */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            overflow: auto; /* Permitir scroll si el contenido excede la altura */
+            color: #6d4c4c; /* Texto marrón suave */
+            padding: 20px; /* Añadir padding para evitar que el contenido toque los bordes */
+            box-sizing: border-box; /* Incluir padding en el tamaño total */
+        }
+        .main-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px; /* Espacio entre la tarjeta y los botones de navegación */
+            width: 100%;
+            max-width: 400px;
+        }
+        .card-container {
+            position: relative;
+            width: 100%;
+            height: 600px; /* Altura fija para la tarjeta */
+            overflow: hidden;
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15), 0 5px 15px rgba(0, 0, 0, 0.1); /* Sombra más pronunciada */
+            background-color: #fff;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        .card {
+            position: absolute; /* Todas las tarjetas son de posición absoluta */
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem;
+            text-align: center;
+            background-color: #fff;
+            opacity: 0;
+            transform: translateX(100%); /* Posición inicial fuera de la vista a la derecha */
+            transition: transform 0.8s ease-in-out, opacity 0.8s ease-in-out; /* Transición para opacidad y movimiento */
+            border-radius: 20px;
+            box-sizing: border-box;
+            z-index: 1; /* Z-index por defecto para todas las tarjetas */
+        }
+        .card.active {
+            opacity: 1;
+            transform: translateX(0); /* Se desliza a la vista */
+            z-index: 2; /* La tarjeta activa está en la parte superior */
+        }
+        .card-title {
+            font-family: 'Dancing Script', cursive; /* Nueva fuente para títulos */
+            font-size: 2.5rem; /* Tamaño de fuente ligeramente mayor */
+            font-weight: 700;
+            color: #d89696; /* Rosa más oscuro para títulos */
+            margin-bottom: 1rem;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.05); /* Sombra de texto sutil */
+        }
+        .card-subtitle {
+            font-family: 'Dancing Script', cursive; /* Nueva fuente para subtítulos */
+            font-size: 1.8rem; /* Tamaño de fuente ligeramente mayor */
+            font-weight: 600;
+            color: #b76e79; /* Rosa medio para subtítulos */
+            margin-bottom: 0.5rem;
+            text-shadow: 0.5px 0.5px 1px rgba(0, 0, 0, 0.03); /* Sombra de texto sutil */
+        }
+        .card-text {
+            font-size: 1.1rem;
+            line-height: 1.7; /* Espaciado de línea mejorado */
+            margin-bottom: 1.5rem;
+        }
+        .bunny-image-frame {
+            width: 180px; /* Tamaño del marco */
+            height: 180px; /* Tamaño del marco */
+            border-radius: 20px; /* Bordes redondeados para el marco */
+            background: linear-gradient(45deg, #fce4ec, #f7e6e6); /* Degradado suave para el marco */
+            padding: 10px; /* Espacio entre el marco y la imagen */
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1), 0 5px 10px rgba(0, 0, 0, 0.05); /* Sombra para el marco */
+            margin-bottom: 1.5rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: transform 0.3s ease; /* Transición para efecto hover */
+        }
+        .bunny-image-frame:hover {
+            transform: scale(1.03); /* Pequeño efecto de escala al pasar el mouse */
+        }
+        .bunny-image {
+            width: 100%; /* La imagen ocupa todo el espacio del marco */
+            height: 100%;
+            object-fit: cover; /* Asegura que la imagen cubra el marco sin distorsionarse */
+            border-radius: 15px; /* Bordes redondeados para la imagen dentro del marco */
+        }
+        .navigation-buttons {
+            display: flex;
+            gap: 20px; /* Mayor espacio entre botones */
+            z-index: 3; /* Asegura que los botones estén por encima de las tarjetas (aunque ya no se superponen) */
+            margin-top: 20px; /* Espacio superior para separar de la tarjeta */
+        }
+        .nav-button {
+            background-color: #d89696;
+            color: white;
+            padding: 14px 30px; /* Mayor padding para botones */
+            border: none;
+            border-radius: 35px; /* Más redondeado */
+            font-size: 1.05rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15); /* Sombra más pronunciada */
+        }
+        .nav-button:hover {
+            background-color: #b76e79;
+            transform: translateY(-3px); /* Desplazamiento más notorio */
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+        }
+        .nav-button:disabled {
+            background-color: #e0e0e0; /* Color más claro para deshabilitado */
+            cursor: not-allowed;
+            box-shadow: none;
+            transform: translateY(0);
+        }
+        .dots-container {
+            position: absolute;
+            top: 25px; /* Ligeramente más abajo */
+            display: flex;
+            gap: 10px; /* Mayor espacio entre puntos */
+            z-index: 3; /* Asegura que los puntos estén por encima de las tarjetas */
+        }
+
+        .dot {
+            width: 12px; /* Tamaño ligeramente mayor */
+            height: 12px;
+            background-color: #e0b0e0;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+        }
+        .dot.active {
+            background-color: #d89696;
+            transform: scale(1.2); /* Efecto de escala para el punto activo */
+        }
+
+        /* Estilos para botones de acción */
+        .action-button {
+            background-color: #a87b7b; /* Un tono de rosa/marrón para los botones de acción */
+            color: white;
+            padding: 12px 25px;
+            border: none;
+            border-radius: 30px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .action-button:hover {
+            background-color: #8c6a6a;
+            transform: translateY(-2px);
+        }
+        
+        /* Efecto de brillo/partículas para la última página */
+        #card-5::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at center, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 70%);
+            animation: pulse-glow 3s infinite alternate; /* Animación de brillo */
+            pointer-events: none;
+            border-radius: 20px;
+        }
+
+        @keyframes pulse-glow {
+            0% { opacity: 0; transform: scale(0.95); }
+            50% { opacity: 1; transform: scale(1); }
+            100% { opacity: 0; transform: scale(0.95); }
+        }
+
+        /* Estilos para el botón de música */
+        .music-button {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background-color: #d89696;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.2rem;
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            z-index: 4; /* Asegura que esté por encima de todo */
+            transition: background-color 0.3s ease, transform 0.2s ease;
+        }
+        .music-button:hover {
+            background-color: #b76e79;
+            transform: scale(1.05);
+        }
+
+        /* Estilos responsivos */
+        @media (max-width: 768px) {
+            .card-container {
+                width: 95%;
+                height: 80vh; /* Ajustar altura para móvil si es necesario */
+            }
+            .card-title {
+                font-size: 2rem;
+            }
+            .card-subtitle {
+                font-size: 1.5rem;
+            }
+            .card-text {
+                font-size: 0.95rem;
+            }
+            .bunny-image-frame {
+                width: 150px;
+                height: 150px;
+            }
+            .nav-button {
+                padding: 10px 20px;
+                font-size: 0.9rem;
+            }
+            .music-button {
+                top: 10px;
+                right: 10px;
+                width: 35px;
+                height: 35px;
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="main-wrapper">
+        <div class="card-container">
+            <div class="dots-container" id="dotsContainer">
+                </div>
+
+            <button id="musicToggleBtn" class="music-button">🎵</button>
+
+            <div class="card active" id="card-1">
+                <div class="bunny-image-frame">
+                    <img src="uploaded:75dcc599f6b02afeb7699c74c686705c.jpg-a3a5c37f-ca7c-47be-b031-ae768fd3faaa" alt="Conejita con mariposa" class="bunny-image">
+                </div>
+                <h1 class="card-title">¡La Dulce Espera Está Por Terminar!</h1>
+                <p class="card-text">
+                    Te invitamos al Baby Shower de nuestra pequeña que viene en camino.
+                    Será un día lleno de amor y alegría para celebrar su llegada.
+                </p>
+            </div>
+
+            <div class="card" id="card-2">
+                <div class="bunny-image-frame">
+                    <img src="uploaded:a1ff789dffec134d87719c21a695ff9c.jpg-781ca591-970b-4213-b539-75c9ef83e9a7" alt="Conejita feliz con lazo" class="bunny-image">
+                </div>
+                <h1 class="card-title">¡Aleja y David Están Muy Felices!</h1>
+                <p class="card-text">
+                    Sus papitos, Aleja y David, están muy felices y les gustaría que formes parte de este evento
+                    que harán en su honor para darle la bienvenida al mundo a su princesa.
+                </p>
+            </div>
+
+            <div class="card" id="card-3">
+                <div class="bunny-image-frame">
+                    <img src="uploaded:image_c90a71.jpg-c444d646-6f6c-45ee-8f59-2af0992059c4" alt="Conejita con flores" class="bunny-image">
+                </div>
+                <h1 class="card-title">¡Te Esperamos!</h1>
+                <p class="card-text">
+                    <strong>Día:</strong> Sábado 7 de Junio<br>
+                    <strong>Hora:</strong> 3:00 PM<br>
+                    <button id="addToCalendarBtn" class="action-button mt-4">📅 Agregar a Google Calendar</button>
+                </p>
+                <p class="card-text">
+                    <strong>Dirección:</strong> Calle 13 #8-09 La Aldea, Villamaría<br>
+                    <a href="https://maps.app.goo.gl/vgCkqvfSuovTpPJ16" target="_blank" class="action-button inline-block mt-4">📍 Ver Ubicación</a>
+                </p>
+            </div>
+
+            <div class="card" id="card-4">
+                <div class="bunny-image-frame">
+                    <img src="uploaded:79edd64efa5a15a3469567e8f913d768.jpg-6a387836-22ff-435b-9ecd-b55a0918c084" alt="Conejita con corona de flores y corazones" class="bunny-image">
+                </div>
+                <h1 class="card-title">El Amor se Multiplica</h1>
+                <p class="card-text">
+                    En la familia habrá una sonrisa iluminando nuestras vidas.
+                    Con amor e ilusión esperamos su llegada.
+                    ¡Gracias por ser parte de esta alegría!
+                </p>
+            </div>
+
+            <div class="card" id="card-5">
+                <div class="bunny-image-frame">
+                    <img src="uploaded:image_c98dba.png-d568f845-fe27-4b11-b841-8ceca40ad716" alt="Conejita bebé con mariposa" class="bunny-image">
+                </div>
+                <h1 class="card-title" style="font-size: 3rem; color: #d89696;">Ela</h1>
+                <p class="card-text">
+                    <span class="card-subtitle" style="font-size: 1.5rem;">Regalo de Dios</span>
+                </p>
+            </div>
+        </div>
+
+        <div class="navigation-buttons">
+            <button id="prevBtn" class="nav-button" disabled>Anterior</button>
+            <button id="nextBtn" class="nav-button">Siguiente</button>
+        </div>
+    </div>
+
+    <script>
+        const cards = document.querySelectorAll('.card');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const dotsContainer = document.getElementById('dotsContainer');
+        const addToCalendarBtn = document.getElementById('addToCalendarBtn');
+        const musicToggleBtn = document.getElementById('musicToggleBtn'); // Botón de música
+        let currentCardIndex = 0;
+
+        // Detalles del evento para el calendario
+        const eventTitle = "Baby Shower de Ela";
+        const eventDescription = "¡Te invitamos al Baby Shower de nuestra pequeña Ela, Regalo de Dios!";
+        const eventLocation = "Calle 13 #8-09 La Aldea, Villamaría";
+        const eventDate = "20250607"; // Formato YYYYMMDD
+        const eventTimeStart = "150000"; // HHMMSS (3:00 PM)
+        const eventTimeEnd = "170000"; // HHMMSS (5:00 PM, 2 horas después)
+
+        // --- Configuración de Tone.js para la música ---
+        // Añadir un efecto de reverberación
+        const reverb = new Tone.Reverb({
+            decay: 2.5,    // Duración de la cola de reverberación en segundos (un poco más larga)
+            preDelay: 0.05, // Retraso antes de que comience la reverberación
+            wet: 0.5     // Cantidad de señal "húmeda" (reverberada) (un poco más presente)
+        }).toDestination();
+
+        // Conectar el sintetizador a la reverberación y luego al destino
+        let synth = new Tone.Synth({
+            oscillator: {
+                type: "sine" // Cambiado a "sine" para un sonido más suave y puro
+            },
+            envelope: {
+                attack: 0.1,    // Ataque más lento para un inicio suave
+                decay: 0.8,     // Decaimiento más largo
+                sustain: 0.5,   // Sostenido moderado
+                release: 1.5    // Liberación más larga para una cola suave
+            }
+        }).connect(reverb); // Conectar el sintetizador a la reverberación
+
+        let isPlaying = false;
+        let melodyPart;
+
+        // Definir una melodía dulce y armoniosa
+        const melody = [
+            // Frase 1 (C mayor)
+            { time: "0:0:0", note: "C4", duration: "4n", velocity: 0.8 },
+            { time: "0:0:2", note: "E4", duration: "8n", velocity: 0.7 },
+            { time: "0:1:0", note: "G4", duration: "4n", velocity: 0.8 },
+            { time: "0:1:2", note: "C5", duration: "8n", velocity: 0.9 },
+            { time: "0:2:0", note: "G4", duration: "4n", velocity: 0.8 },
+            { time: "0:2:2", note: "E4", duration: "8n", velocity: 0.7 },
+            { time: "0:3:0", note: "C4", duration: "2n", velocity: 0.9 }, // Nota más larga
+
+            // Frase 2 (G mayor, con un toque de D)
+            { time: "0:4:0", note: "D4", duration: "4n", velocity: 0.8 },
+            { time: "0:4:2", note: "F#4", duration: "8n", velocity: 0.7 }, // F# para G mayor
+            { time: "0:5:0", note: "A4", duration: "4n", velocity: 0.8 },
+            { time: "0:5:2", note: "D5", duration: "8n", velocity: 0.9 },
+            { time: "0:6:0", note: "A4", duration: "4n", velocity: 0.8 },
+            { time: "0:6:2", note: "F#4", duration: "8n", velocity: 0.7 },
+            { time: "0:7:0", note: "D4", duration: "2n", velocity: 0.9 }, // Nota más larga
+
+            // Frase 3 (regreso a C mayor y cierre)
+            { time: "0:8:0", note: "C4", duration: "4n", velocity: 0.8 },
+            { time: "0:8:2", note: "E4", duration: "8n", velocity: 0.7 },
+            { time: "0:9:0", note: "G4", duration: "4n", velocity: 0.8 },
+            { time: "0:9:2", note: "C5", duration: "8n", velocity: 0.9 },
+            { time: "0:10:0", note: "G4", duration: "4n", velocity: 0.8 },
+            { time: "0:10:2", note: "E4", duration: "8n", velocity: 0.7 },
+            { time: "0:11:0", note: "C4", duration: "1m", velocity: 1.0 } // Cierre largo y final
+        ];
+
+        // Crear una "parte" de Tone.js para la melodía que se repita
+        melodyPart = new Tone.Part((time, value) => {
+            synth.triggerAttackRelease(value.note, value.duration, time, value.velocity);
+        }, melody).start(0);
+
+        melodyPart.loop = true;
+        melodyPart.loopEnd = "12m"; // Ajustar la duración del loop a la nueva melodía
+
+        // Función para alternar la música
+        musicToggleBtn.addEventListener('click', async () => {
+            if (Tone.context.state !== 'running') {
+                await Tone.start(); // Iniciar el contexto de audio en el primer clic del usuario
+                console.log('Audio context started');
+            }
+
+            if (isPlaying) {
+                Tone.Transport.pause();
+                musicToggleBtn.textContent = '🎵'; // Icono de música
+            } else {
+                Tone.Transport.start();
+                musicToggleBtn.textContent = '⏸️'; // Icono de pausa
+            }
+            isPlaying = !isPlaying;
+        });
+
+        // Función para mostrar la tarjeta actual
+        function showCard(index) {
+            const prevCard = cards[currentCardIndex]; // Obtener la tarjeta activa actualmente
+            const nextCard = cards[index]; // Obtener la tarjeta a mostrar
+
+            if (!prevCard || !nextCard || prevCard === nextCard) return; // Prevenir errores y no hacer nada si es la misma tarjeta
+
+            // Determinar la dirección para la animación de deslizamiento
+            const incomingDirection = index > currentCardIndex ? '100%' : '-100%'; // La nueva tarjeta viene de la derecha/izquierda
+            const outgoingDirection = index > currentCardIndex ? '-100%' : '100%'; // La tarjeta antigua va a la izquierda/derecha
+
+            // 1. Preparar la tarjeta entrante (nextCard) para su posición inicial fuera de pantalla
+            nextCard.style.transition = 'none'; // Deshabilitar temporalmente la transición para posicionamiento instantáneo
+            nextCard.style.transform = `translateX(${incomingDirection})`; // Colocarla fuera de pantalla
+            nextCard.style.opacity = '0'; // Hacerla invisible
+            nextCard.style.zIndex = '2'; // Asegurar que estará encima cuando esté activa
+
+            // 2. Forzar un "reflow" para aplicar los estilos iniciales de nextCard inmediatamente
+            void nextCard.offsetWidth;
+
+            // 3. Iniciar la transición para la tarjeta entrante
+            nextCard.style.transition = 'transform 0.8s ease-in-out, opacity 0.8s ease-in-out'; // Volver a habilitar la transición
+            nextCard.style.transform = 'translateX(0)'; // Deslizarla al centro
+            nextCard.style.opacity = '1'; // Aparecer gradualmente
+            nextCard.classList.add('active'); // Marcar como activa
+
+            // 4. Iniciar la transición para la tarjeta saliente (prevCard)
+            // Asegurar que prevCard vaya detrás y se deslice fuera
+            prevCard.style.zIndex = '1'; // Enviar inmediatamente la tarjeta antigua al fondo
+            prevCard.style.transition = 'transform 0.8s ease-in-out, opacity 0.8s ease-in-out'; // Aplicar transición
+            prevCard.style.transform = `translateX(${outgoingDirection})`; // Deslizarla fuera
+            prevCard.style.opacity = '0'; // Desvanecerla
+            prevCard.classList.remove('active'); // Quitar la clase activa
+
+            // 5. Actualizar el índice de la tarjeta actual y refrescar los elementos de navegación
+            currentCardIndex = index;
+            updateButtons();
+            updateDots();
+        }
+
+        // Función para actualizar el estado de los botones (Anterior/Siguiente)
+        function updateButtons() {
+            prevBtn.disabled = currentCardIndex === 0;
+            nextBtn.disabled = currentCardIndex === cards.length - 1;
+        }
+
+        // Función para crear y actualizar los puntos de navegación
+        function updateDots() {
+            dotsContainer.innerHTML = ''; // Limpiar puntos existentes
+            cards.forEach((_, i) => {
+                const dot = document.createElement('div');
+                dot.classList.add('dot');
+                if (i === currentCardIndex) {
+                    dot.classList.add('active');
+                }
+                dot.addEventListener('click', () => {
+                    showCard(i); // Navegar a la tarjeta al hacer clic en el punto
+                });
+                dotsContainer.appendChild(dot);
+            });
+        }
+
+        // Event Listeners para los botones de navegación
+        prevBtn.addEventListener('click', () => {
+            if (currentCardIndex > 0) {
+                showCard(currentCardIndex - 1);
+            }
+        });
+
+        nextBtn.addEventListener('click', () => {
+            if (currentCardIndex < cards.length - 1) {
+                showCard(currentCardIndex + 1);
+            }
+        });
+
+        // --- Funcionalidad de Agregar a Google Calendar (directo) ---
+        addToCalendarBtn.addEventListener('click', () => {
+            const googleCalUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(eventTitle)}&dates=${eventDate}T${eventTimeStart}/${eventDate}T${eventTimeEnd}&details=${encodeURIComponent(eventDescription)}&location=${encodeURIComponent(eventLocation)}&sf=true&output=xml`;
+            window.open(googleCalUrl, '_blank');
+        });
+
+        // Inicializar la primera tarjeta y los botones/puntos al cargar la página
+        showCard(currentCardIndex);
+    </script>
+</body>
+</html>
