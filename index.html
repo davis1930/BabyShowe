@@ -221,11 +221,57 @@
         }
 
         /* Estilos responsivos */
+        
         @media (max-width: 768px) {
             .card-container {
                 width: 95%;
-                height: 80vh; /* Ajustar altura para móvil si es necesario */
+                height: auto;
+                min-height: 60vh;
             }
+
+            .main-wrapper {
+                justify-content: flex-start;
+                padding-bottom: 40px;
+            }
+
+            .navigation-buttons {
+                flex-wrap: wrap;
+                justify-content: center;
+                width: 100%;
+                padding-bottom: 1rem;
+            }
+
+            .card-title {
+                font-size: 2rem;
+            }
+
+            .card-subtitle {
+                font-size: 1.5rem;
+            }
+
+            .card-text {
+                font-size: 0.95rem;
+            }
+
+            .bunny-image-frame {
+                width: 150px;
+                height: 150px;
+            }
+
+            .nav-button {
+                padding: 10px 20px;
+                font-size: 0.9rem;
+            }
+
+            .music-button {
+                top: 10px;
+                right: 10px;
+                width: 35px;
+                height: 35px;
+                font-size: 1rem;
+            }
+        }
+    
             .card-title {
                 font-size: 2rem;
             }
