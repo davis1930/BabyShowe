@@ -17,7 +17,7 @@
             margin: 0;
             overflow: auto; /* Permitir scroll si el contenido excede la altura */
             color: #6d4c4c; /* Texto marrón suave */
-            padding: 20px; /* Añadir padding para evitar que el contenido toque los bordes */
+            padding: 10px; /* Añadir padding para evitar que el contenido toque los bordes */
             box-sizing: border-box; /* Incluir padding en el tamaño total */
         }
         .main-wrapper {
@@ -31,10 +31,11 @@
         .card-container {
             position: relative;
             width: 100%;
-            height: 600px; /* Altura fija para la tarjeta */
+            height: auto;
+            min-height: 80vh;
             overflow: hidden;
             border-radius: 20px;
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15), 0 5px 15px rgba(0, 0, 0, 0.1); /* Sombra más pronunciada */
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15), 0 5px 15px rgba(0, 0, 0, 0.1);
             background-color: #fff;
             display: flex;
             flex-direction: column;
@@ -58,6 +59,8 @@
             border-radius: 20px;
             box-sizing: border-box;
             z-index: 1; /* Z-index por defecto para todas las tarjetas */
+            min-height: 100%;
+
         }
         .card.active {
             opacity: 1;
