@@ -35,11 +35,11 @@
         .card-container {
             position: relative;
             flex-grow: 1;
-            height: 90vh;
-            max-height: 90vh;
+            height: 70vh;
+            max-height: 70vh;
             width: 100%;
             height: auto;
-            min-height: 80vh;
+            min-height: 60vh;
             overflow: hidden;
             border-radius: 20px;
             box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15), 0 5px 15px rgba(0, 0, 0, 0.1);
@@ -118,10 +118,18 @@
             border-radius: 15px; /* Bordes redondeados para la imagen dentro del marco */
         }
         .navigation-buttons {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            padding: 1rem;
+            background-color: rgba(255, 255, 255, 0.9); /* Fondo semitransparente */
+            box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
+            
             display: flex;
-            gap: 20px; /* Mayor espacio entre botones */
-            z-index: 3; /* Asegura que los botones estén por encima de las tarjetas (aunque ya no se superponen) */
-            margin-top: 20px; /* Espacio superior para separar de la tarjeta */
+            justify-content: center; /* <--- Esto centra los botones */
+            gap: 20px; /* Espacio entre Anterior y Siguiente */
+            z-index: 5;
         }
         .nav-button {
             background-color: #d89696;
