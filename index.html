@@ -15,21 +15,28 @@
             align-items: center;
             min-height: 100vh;
             margin: 0;
-            overflow: auto; /* Permitir scroll si el contenido excede la altura */
+            overflow: hidden; /* Permitir scroll si el contenido excede la altura */
             color: #6d4c4c; /* Texto marrón suave */
-            padding: 10px; /* Añadir padding para evitar que el contenido toque los bordes */
+            padding: 0; /* Añadir padding para evitar que el contenido toque los bordes */
             box-sizing: border-box; /* Incluir padding en el tamaño total */
         }
         .main-wrapper {
             display: flex;
             flex-direction: column;
+            justify-content: center;
             align-items: center;
             gap: 20px; /* Espacio entre la tarjeta y los botones de navegación */
             width: 100%;
             max-width: 400px;
+            height: 100vh;
+            padding: 0 1rem;
+            box-sizing: border-box;
         }
         .card-container {
             position: relative;
+            flex-grow: 1;
+            height: 90vh;
+            max-height: 90vh;
             width: 100%;
             height: auto;
             min-height: 80vh;
@@ -226,10 +233,6 @@
         /* Estilos responsivos */
         
         @media (max-width: 768px) {
-            body {
-                align-items: flex-start !important; /* en lugar de center */
-            }
-            
             .card-container {
                 width: 95%;
                 height: auto;
@@ -238,7 +241,6 @@
 
             .main-wrapper {
                 justify-content: flex-start;
-                margin-top: 10px; /* o 0px si quieres pegarla más */
                 padding-bottom: 40px;
             }
 
