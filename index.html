@@ -8,44 +8,40 @@
     <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@300;400;500;600;700&family=Dancing+Script:wght@400;700&display=swap" rel="stylesheet">
     <style>
         body {
-            font-family: 'Quicksand', sans-serif; /* Nueva fuente para el cuerpo */
             background: linear-gradient(135deg, #fce4ec 0%, #f7e6e6 50%, #fce4ec 100%); /* Degradado suave */
+            font-family: 'Quicksand', sans-serif; /* Nueva fuente para el cuerpo */
             display: flex;
-            justify-content: center;
+            flex-direction: column;
+            justify-content: flex-start; /* cambia center por flex-start */
             align-items: center;
-            min-height: 100vh;
-            margin: 0;
+            height: 100vh;
             overflow: hidden; /* Permitir scroll si el contenido excede la altura */
             color: #6d4c4c; /* Texto marrón suave */
-            padding: 0; /* Añadir padding para evitar que el contenido toque los bordes */
+            padding-top: 30px; /* Añadir padding para evitar que el contenido toque los bordes */
             box-sizing: border-box; /* Incluir padding en el tamaño total */
         }
         .main-wrapper {
+            flex-grow: 1;
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
             width: 100%;
             max-width: 400px;
-            height: 80vh;
-            padding: 0 0rem;
+            padding: 0 1rem;
+            padding-bottom: 80px; /* espacio para los botones fijos */
             box-sizing: border-box;
         }
         .card-container {
-            position: relative;
             flex-grow: 1;
-            height: 70vh;
-            max-height: 70vh;
             width: 100%;
-            height: auto;
-            min-height: 60vh;
+            max-height: calc(100vh - 150px); /* altura visible - botones - espacio superior */
             overflow: hidden;
             border-radius: 20px;
             box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15), 0 5px 15px rgba(0, 0, 0, 0.1);
             background-color: #fff;
             display: flex;
-            flex-direction: column;
-            justify-content: center;
+            position: relative;
             align-items: center;
         }
         .card {
@@ -154,11 +150,10 @@
             transform: translateY(0);
         }
         .dots-container {
-            position: absolute;
-            top: 25px; /* Ligeramente más abajo */
             display: flex;
-            gap: 10px; /* Mayor espacio entre puntos */
-            z-index: 3; /* Asegura que los puntos estén por encima de las tarjetas */
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 10px;
         }
 
         .dot {
@@ -318,9 +313,10 @@
 </head>
 <body>
     <div class="main-wrapper">
-        <div class="card-container">
-            <div class="dots-container" id="dotsContainer">
+        <div class="dots-container" id="dotsContainer">
                 </div>
+
+        <div class="card-container">
 
             <audio id="backgroundMusic" loop>
                 <source src="cancion.mp3" type="audio/mpeg">
