@@ -38,7 +38,8 @@
         .card-container {
             flex-grow: 1; /* Permite que el card-container ocupe el espacio vertical restante */
             width: 100%;
-            /* Elimina la altura fija, flex-grow la manejará. max-height se ajustará en media queries. */
+            /* Ajusta la altura máxima para dejar espacio a los botones y padding del body */
+            max-height: calc(100vh - 40px - 80px); /* 40px por padding del body (20px top + 20px bottom), 80px por botones y su margen */
             overflow: hidden; /* Mantiene el desbordamiento oculto en el contenedor principal */
             border-radius: 20px;
             box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15), 0 5px 15px rgba(0, 0, 0, 0.1); /* Sombra más pronunciada */
@@ -239,12 +240,14 @@
         @media (max-width: 768px) {
             .main-wrapper {
                 padding-top: 15px; /* Ajuste el padding superior para móviles */
-                padding-bottom: 85px; /* Aumentado para más espacio sobre los botones en móviles */
+                padding-bottom: 95px; /* Aumentado para más espacio sobre los botones en móviles */
                 padding-left: 10px;
                 padding-right: 10px;
             }
             .card-container {
                 width: 95%;
+                /* Ajusta la altura máxima para móviles, dejando espacio para los botones */
+                max-height: calc(100vh - 15px - 95px); /* 15px por padding-top del main-wrapper, 95px por padding-bottom del main-wrapper */
             }
             .card-title {
                 font-size: 2rem;
