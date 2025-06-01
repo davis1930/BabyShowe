@@ -60,7 +60,7 @@
             box-sizing: border-box;
             z-index: 1; /* Z-index por defecto para todas las tarjetas */
             min-height: 100%;
-
+            overflow-y: auto;
         }
         .card.active {
             opacity: 1;
@@ -226,6 +226,10 @@
         /* Estilos responsivos */
         
         @media (max-width: 768px) {
+            body {
+                align-items: flex-start !important; /* en lugar de center */
+            }
+            
             .card-container {
                 width: 95%;
                 height: auto;
@@ -234,6 +238,7 @@
 
             .main-wrapper {
                 justify-content: flex-start;
+                margin-top: 10px; /* o 0px si quieres pegarla más */
                 padding-bottom: 40px;
             }
 
