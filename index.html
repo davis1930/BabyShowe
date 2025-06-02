@@ -6,58 +6,350 @@
     <title>Invitación Baby Shower</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@300;400;500;600;700&family=Dancing+Script:wght@400;700&display=swap" rel="stylesheet">
-    
-    <script type="module">
-        // Importa solo lo que necesitas para la inicialización
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-auth.js";
-        import { getFirestore } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-firestore.js";
-
-        // TU CONFIGURACIÓN DE FIREBASE (¡Con tus datos, tal como me los diste!)
-        const firebaseConfig = {
-            apiKey: "AIzaSyDa8xUmziIYohy8TymBrhRT4nVRcUMkvdE",
-            authDomain: "babyshowerela.firebaseapp.com",
-            projectId: "babyshowerela",
-            storageBucket: "babyshowerela.firebasestorage.app",
-            messagingSenderId: "848219577782",
-            appId: "1:848219577782:web:41bcb427e6f11c7ebeb517"
-        };
-
-        // Inicializa Firebase y hazlo global
-        window.firebaseApp = initializeApp(firebaseConfig);
-        window.db = getFirestore(window.firebaseApp);
-        window.auth = getAuth(window.firebaseApp);
-        window.currentUserId = null; // Se actualizará al autenticarse
-        window.appId = firebaseConfig.appId; // También hacemos appId global si es necesario
-
-        // Autenticación Anónima
-        onAuthStateChanged(window.auth, async (user) => {
-            if (user) {
-                window.currentUserId = user.uid;
-                document.getElementById('userIdDisplay').textContent = `Tu ID de usuario: ${window.currentUserId}`;
-            } else {
-                try {
-                    // Aquí no usamos __initial_auth_token ni __app_id porque estamos en Netlify
-                    await signInAnonymously(window.auth);
-                } catch (error) {
-                    console.error("Error during Firebase authentication:", error);
-                    document.getElementById('userIdDisplay').textContent = `Error de autenticación: ${error.message}`;
-                }
-            }
-        });
-    </script>
     <style>
-        /* ... Tu CSS ... */
+        body {
+            background: linear-gradient(135deg, #fce4ec 0%, #f7e6e6 50%, #fce4ec 100%); /* Degradado suave */
+            font-family: 'Quicksand', sans-serif; /* Nueva fuente para el cuerpo */
+            display: flex;
+            flex-direction: column; /* Hace que el body sea un contenedor flex en columna */
+            justify-content: flex-start; /* Alinea el contenido al inicio */
+            align-items: center;
+            min-height: 100vh; /* Asegura que el body ocupe al menos el 100% de la altura del viewport */
+            margin: 0;
+            overflow: hidden; /* Oculta el desbordamiento del body, las tarjetas se desplazan internamente */
+            color: #6d4c4c; /* Texto marrón suave */
+            padding: 0; /* Elimina el padding del body, se manejará en los elementos internos */
+            box-sizing: border-box; /* Incluir padding en el tamaño total */
+            position: relative; /* Necesario para que los elementos fixed se posicionen correctamente respecto al body */
+        }
+        .main-wrapper {
+            flex-grow: 1; /* Permite que el main-wrapper ocupe el espacio vertical disponible */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            max-width: 400px;
+            margin: 0 auto; /* Centra el main-wrapper horizontalmente */
+            padding-top: 20px; /* Espacio desde la parte superior de la ventana */
+            padding-bottom: 100px; /* Aumentado para más espacio sobre los botones fijos */
+            box-sizing: border-box;
+            position: relative; /* Para el contexto de z-index si es necesario */
+        }
+        .card-container {
+            flex-grow: 1; /* Permite que el card-container ocupe el espacio vertical restante */
+            width: 100%;
+            /* Ajusta la altura máxima para dejar espacio a los botones y padding del body */
+            max-height: calc(100vh - 40px - 80px); /* 40px por padding del body (20px top + 20px bottom), 80px por botones y su margen */
+            overflow: hidden; /* Mantiene el desbordamiento oculto en el contenedor principal */
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15), 0 5px 15px rgba(0, 0, 0, 0.1); /* Sombra más pronunciada */
+            background-color: #fff;
+            display: flex;
+            position: relative;
+            align-items: center;
+        }
+        .card {
+            position: absolute; /* Todas las tarjetas son de posición absoluta */
+            width: 100%;
+            height: 100%; /* La tarjeta ocupa el 100% de la altura de su padre (.card-container) */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem;
+            text-align: center;
+            background-color: #fff;
+            opacity: 0;
+            transform: translateX(100%); /* Posición inicial fuera de la vista a la derecha */
+            transition: transform 0.8s ease-in-out, opacity 0.8s ease-in-out; /* Transición para opacidad y movimiento */
+            border-radius: 20px;
+            box-sizing: border-box;
+            z-index: 1; /* Z-index por defecto para todas las tarjetas */
+            overflow-y: auto; /* Permite desplazamiento vertical dentro de la tarjeta si el contenido es largo */
+        }
+        .card.active {
+            opacity: 1;
+            transform: translateX(0); /* Se desliza a la vista */
+            z-index: 2; /* La tarjeta activa está en la parte superior */
+        }
+        .card-title {
+            font-family: 'Dancing Script', cursive; /* Nueva fuente para títulos */
+            font-size: 2.5rem; /* Tamaño de fuente ligeramente mayor */
+            font-weight: 700;
+            color: #d89696; /* Rosa más oscuro para títulos */
+            margin-bottom: 1rem;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.05); /* Sombra de texto sutil */
+        }
+        .card-subtitle {
+            font-family: 'Dancing Script', cursive; /* Nueva fuente para subtítulos */
+            font-size: 1.8rem; /* Tamaño de fuente ligeramente mayor */
+            font-weight: 600;
+            color: #b76e79; /* Rosa medio para subtítulos */
+            margin-bottom: 0.5rem;
+            text-shadow: 0.5px 0.5px 1px rgba(0, 0, 0, 0.03); /* Sombra de texto sutil */
+        }
+        .card-text {
+            font-size: 1.1rem;
+            line-height: 1.7; /* Espaciado de línea mejorado */
+            margin-bottom: 1.5rem;
+        }
+        .bunny-image-frame {
+            width: 180px; /* Tamaño del marco */
+            height: 180px; /* Tamaño del marco */
+            border-radius: 20px; /* Bordes redondeados para el marco */
+            background: linear-gradient(45deg, #fce4ec, #f7e6e6); /* Degradado suave para el marco */
+            padding: 10px; /* Espacio entre el marco y la imagen */
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1), 0 5px 10px rgba(0, 0, 0, 0.05); /* Sombra para el marco */
+            margin-bottom: 1.5rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: transform 0.3s ease; /* Transición para efecto hover */
+        }
+        .bunny-image-frame:hover {
+            transform: scale(1.03); /* Pequeño efecto de escala al pasar el mouse */
+        }
+        .bunny-image {
+            width: 100%; /* La imagen ocupa todo el espacio del marco */
+            height: 100%;
+            object-fit: cover; /* Asegura que la imagen cubra el marco sin distorsionarse */
+            border-radius: 15px; /* Bordes redondeados para la imagen dentro del marco */
+        }
+        .navigation-buttons {
+            position: fixed; /* Fija los botones en la ventana */
+            bottom: 0; /* Los posiciona en la parte inferior */
+            left: 0;
+            width: 100%;
+            padding: 1rem;
+            background-color: rgba(255, 255, 255, 0.9); /* Fondo semitransparente */
+            box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1); /* Sombra superior */
+            
+            display: flex;
+            justify-content: center; /* Centra los botones */
+            gap: 20px; /* Espacio entre Anterior y Siguiente */
+            z-index: 10; /* Asegura que estén por encima de todo */
+        }
+        .nav-button {
+            background-color: #d89696;
+            color: white;
+            padding: 14px 30px; /* Mayor padding para botones */
+            border: none;
+            border-radius: 35px; /* Más redondeado */
+            font-size: 1.05rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15); /* Sombra más pronunciada */
+        }
+        .nav-button:hover {
+            background-color: #b76e79;
+            transform: translateY(-3px); /* Desplazamiento más notorio */
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+        }
+        .nav-button:disabled {
+            background-color: #e0e0e0; /* Color más claro para deshabilitado */
+            cursor: not-allowed;
+            box-shadow: none;
+            transform: translateY(0);
+        }
+        .dots-container {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 10px; /* Espacio entre los puntos y el contenedor de tarjetas */
+            z-index: 3; /* Asegura que los puntos sean visibles */
+        }
+
+        .dot {
+            width: 12px; /* Tamaño ligeramente mayor */
+            height: 12px;
+            background-color: #e0b0e0;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+        }
+        .dot.active {
+            background-color: #d89696;
+            transform: scale(1.2); /* Efecto de escala para el punto activo */
+        }
+
+        /* Estilos para botones de acción */
+        .action-button {
+            background-color: #a87b7b; /* Un tono de rosa/marrón para los botones de acción */
+            color: white;
+            padding: 12px 25px;
+            border: none;
+            border-radius: 30px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .action-button:hover {
+            background-color: #8c6a6a;
+            transform: translateY(-2px);
+        }
+        
+        /* Efecto de brillo/partículas para la última página */
+        #card-5::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at center, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 70%);
+            animation: pulse-glow 3s infinite alternate; /* Animación de brillo */
+            pointer-events: none;
+            border-radius: 20px;
+        }
+
+        @keyframes pulse-glow {
+            0% { opacity: 0; transform: scale(0.95); }
+            50% { opacity: 1; transform: scale(1); }
+            100% { opacity: 0; transform: scale(0.95); }
+        }
+
+        /* Estilos para el botón de música */
+        .music-button {
+            position: fixed; /* Fija el botón de música */
+            top: 20px;
+            right: 20px;
+            background-color: #d89696;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.2rem;
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            z-index: 11; /* Asegura que esté por encima de todo */
+            transition: background-color 0.3s ease, transform 0.2s ease;
+        }
+        .music-button:hover {
+            background-color: #b76e79;
+            transform: scale(1.05);
+        }
+
+        /* Estilos responsivos */
+        @media (max-width: 768px) {
+            .main-wrapper {
+                padding-top: 15px; /* Ajuste el padding superior para móviles */
+                padding-bottom: 95px; /* Aumentado para más espacio sobre los botones en móviles */
+                padding-left: 10px;
+                padding-right: 10px;
+            }
+            .card-container {
+                width: 95%;
+                /* Ajusta la altura máxima para móviles, dejando espacio para los botones */
+                max-height: calc(100vh - 15px - 95px); /* 15px por padding-top del main-wrapper, 95px por padding-bottom del main-wrapper */
+            }
+            .card-title {
+                font-size: 2rem;
+            }
+            .card-subtitle {
+                font-size: 1.5rem;
+            }
+            .card-text {
+                font-size: 0.95rem;
+            }
+            .bunny-image-frame {
+                width: 150px;
+                height: 150px;
+            }
+            .nav-button {
+                padding: 10px 20px;
+                font-size: 0.9rem;
+            }
+            .music-button {
+                top: 10px;
+                right: 10px;
+                width: 35px;
+                height: 35px;
+                font-size: 1rem;
+            }
+        }
     </style>
 </head>
 <body>
     <div class="main-wrapper">
+        <div class="dots-container" id="dotsContainer">
+                </div>
+
         <div class="card-container">
-            <div class="card" id="card-6">
-                <input type="text" id="guestNameInput" placeholder="Tu nombre" class="...">
-                <button id="confirmRsvpBtn" class="..."></button>
-                <p id="rsvpMessage" class="..."></p>
-                <ul id="confirmedGuestsList" class="..."></ul>
+
+            <audio id="backgroundMusic" loop>
+                <source src="cancion.mp3" type="audio/mpeg">
+                Tu navegador no soporta la reproducción de audio.
+            </audio>
+
+            <button id="musicToggleBtn" class="music-button">🎵</button>
+
+            <div class="card active" id="card-1">
+                <div class="bunny-image-frame">
+                    <img src="c1.jpg" alt="Conejita con mariposa" class="bunny-image">
+                </div>
+                <h1 class="card-title">¡La Dulce Espera Está Por Terminar!</h1>
+                <p class="card-text">
+                    Te invitamos al Baby Shower de nuestra pequeña que viene en camino.
+                    Será un día lleno de amor y alegría para celebrar su llegada.
+                </p>
+            </div>
+
+            <div class="card" id="card-2">
+                <div class="bunny-image-frame">
+                    <img src="c2.jpg" alt="Conejita feliz con lazo" class="bunny-image">
+                </div>
+                <h1 class="card-title">¡Sus Papitos Aleja y David!</h1>
+                <p class="card-text">
+                    Están muy felices y les gustaría que formes parte de este evento
+                    que harán en su honor para darle la bienvenida al mundo a su princesa.
+                </p>
+            </div>
+
+            <div class="card" id="card-3">
+                <div class="bunny-image-frame">
+                    <img src="c3.jpg" alt="Conejita con flores" class="bunny-image">
+                </div>
+                <h1 class="card-title">¡Te Esperamos!</h1>
+                <p class="card-text">
+                    <strong>Día:</strong> Sábado 7 de Junio<br>
+                    <strong>Hora:</strong> 3:00 PM<br>
+                    <button id="addToCalendarBtn" class="action-button mt-4">📅 Agregar a Google Calendar</button>
+                </p>
+                <p class="card-text">
+                    <strong>Dirección:</strong> Calle 13 #8-09 La Aldea, Villamaría<br>
+                    <a href="https://maps.app.goo.gl/vgCkqvfSuovTpPJ16" target="_blank" class="action-button inline-block mt-4">📍 Ver Ubicación</a>
+                </p>
+            </div>
+
+            <div class="card" id="card-4">
+                <div class="bunny-image-frame">
+                    <img src="c3.jpg" alt="Conejita con corona de flores y corazones" class="bunny-image"> </div>
+                <h1 class="card-title">El Amor se Multiplica</h1>
+                <p class="card-text">
+                    En la familia habrá una sonrisa iluminando nuestras vidas.
+                    Con amor e ilusión esperamos su llegada.
+                    ¡Gracias por ser parte de esta alegría!
+                </p>
+            </div>
+
+            <div class="card" id="card-5">
+                <div class="bunny-image-frame">
+                    <img src="c4.png" alt="Conejita bebé con mariposa" class="bunny-image">
+                </div>
+                <h1 class="card-title" style="font-size: 3rem; color: #d89696;">Ela</h1>
+                <p class="card-text">
+                    <span class="card-subtitle" style="font-size: 1.5rem;">Regalo de Dios</span><br>
+                    Ela, un nombre que susurra un milagro, la melodía de un amor que trasciende.
+                    Ella es la luz que ilumina nuestro camino, el tesoro que florece en el alma,
+                    la promesa divina que completa nuestras vidas.
+                </p>
             </div>
         </div>
 
@@ -65,17 +357,9 @@
             <button id="prevBtn" class="nav-button" disabled>Anterior</button>
             <button id="nextBtn" class="nav-button">Siguiente</button>
         </div>
-        <div id="userIdDisplay" class="text-xs text-gray-400 mt-2"></div>
     </div>
 
-    <script type="module">
-        // Importa solo lo que necesitas para la lógica de la app
-        // Asegúrate de que estas importaciones están en un script 'type="module"'
-        import { collection, addDoc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-firestore.js";
-
-        // Ahora puedes acceder a window.db, window.auth, window.currentUserId
-        // y window.appId (si lo hiciste global arriba)
-        
+    <script>
         const cards = document.querySelectorAll('.card');
         const prevBtn = document.getElementById('prevBtn');
         const nextBtn = document.getElementById('nextBtn');
@@ -83,69 +367,137 @@
         const addToCalendarBtn = document.getElementById('addToCalendarBtn');
         const musicToggleBtn = document.getElementById('musicToggleBtn');
         const backgroundMusic = document.getElementById('backgroundMusic');
-        const guestNameInput = document.getElementById('guestNameInput');
-        const confirmRsvpBtn = document.getElementById('confirmRsvpBtn');
-        const rsvpMessage = document.getElementById('rsvpMessage');
-        const confirmedGuestsList = document.getElementById('confirmedGuestsList');
-
         let currentCardIndex = 0;
         let isPlaying = false;
-        let hasInteractedForMusic = false;
+        let hasInteractedForMusic = false; // Nueva bandera para controlar la primera interacción
 
-        // ... el resto de tu lógica de JavaScript para las tarjetas y botones ...
+        // Detalles del evento para el calendario
+        const eventTitle = "Baby Shower de Ela";
+        const eventDescription = "¡Te invitamos al Baby Shower de nuestra pequeña Ela, Regalo de Dios!";
+        const eventLocation = "Calle 13 #8-09 La Aldea, Villamaría";
+        const eventDate = "20250607"; // Formato CCYYMMDD
+        const eventTimeStart = "150000"; // HHMMSS (3:00 PM)
+        const eventTimeEnd = "170000"; // HHMMSS (5:00 PM, 2 horas después)
 
-        // --- Funcionalidad de Confirmación de Asistencia (RSVP) ---
-        confirmRsvpBtn.addEventListener('click', async () => {
-            const guestName = guestNameInput.value.trim();
-            if (!guestName) {
-                rsvpMessage.textContent = "Por favor, ingresa tu nombre.";
-                rsvpMessage.style.color = "red";
-                return;
-            }
-
-            // Asegúrate de que db esté disponible
-            if (!window.db) {
-                rsvpMessage.textContent = "Error: Firebase no está inicializado. No se puede confirmar asistencia.";
-                rsvpMessage.style.color = "red";
-                console.error("Firestore is not initialized.");
-                return;
-            }
-
-            try {
-                // Usamos window.appId que hicimos global arriba
-                const rsvpsCollectionRef = collection(window.db, `artifacts/${window.appId}/public/data/rsvps`);
-                await addDoc(rsvpsCollectionRef, {
-                    name: guestName,
-                    timestamp: new Date(),
-                    userId: window.currentUserId // Save user ID for tracking
+        // Nueva función para iniciar la música con la primera interacción
+        function tryPlayMusic() {
+            if (!hasInteractedForMusic) {
+                backgroundMusic.play().then(() => {
+                    isPlaying = true;
+                    musicToggleBtn.textContent = '⏸️'; // Cambia a icono de pausa
+                    hasInteractedForMusic = true; // Marca que la música ya intentó reproducirse
+                    document.removeEventListener('click', tryPlayMusic); // Elimina el listener una vez que la música comienza
+                }).catch(error => {
+                    console.warn("La reproducción de música fue bloqueada al primer clic:", error);
+                    isPlaying = false;
+                    musicToggleBtn.textContent = '🎵'; // Vuelve a icono de música si falla
+                    // No eliminamos el listener si falla, para que futuros clics puedan intentarlo.
                 });
-                rsvpMessage.textContent = `¡Gracias, ${guestName}! Tu asistencia ha sido confirmada.`;
-                rsvpMessage.style.color = "green";
-                guestNameInput.value = ''; // Clear the input field
-            } catch (e) {
-                console.error("Error adding document: ", e);
-                rsvpMessage.textContent = "Hubo un error al confirmar tu asistencia. Intenta de nuevo.";
-                rsvpMessage.style.color = "red";
+            }
+        }
+
+        // Agrega el listener al documento para el primer clic
+        document.addEventListener('click', tryPlayMusic);
+
+        // Función para alternar la música con el botón específico
+        musicToggleBtn.addEventListener('click', (event) => {
+            event.stopPropagation(); // Evita que este clic active también el listener global si ya está activo
+            if (isPlaying) {
+                backgroundMusic.pause();
+                musicToggleBtn.textContent = '🎵'; // Icono de música
+            } else {
+                backgroundMusic.play().then(() => {
+                    musicToggleBtn.textContent = '⏸️'; // Icono de pausa
+                    hasInteractedForMusic = true; // Asegura que la bandera esté en true
+                    document.removeEventListener('click', tryPlayMusic); // Elimina el listener global si aún no se ha hecho
+                }).catch(error => {
+                    console.error("Error al intentar reproducir la música desde el botón:", error);
+                    alert("Para escuchar la música, por favor asegúrate de que el navegador lo permita (algunos requieren una interacción manual adicional).");
+                });
+            }
+            isPlaying = !isPlaying;
+        });
+
+        // Función para mostrar la tarjeta actual
+        function showCard(index) {
+            const prevCard = cards[currentCardIndex]; // Get the currently active card
+            const nextCard = cards[index]; // Get the card to show
+
+            if (!prevCard || !nextCard || prevCard === nextCard) return; // Prevent errors and no-op
+
+            // Determine the direction for the slide animation
+            const incomingDirection = index > currentCardIndex ? '100%' : '-100%'; // New card comes from right/left
+            const outgoingDirection = index > currentCardIndex ? '-100%' : '100%'; // Old card goes to left/right
+
+            // 1. Prepare the incoming card (nextCard) for its initial off-screen position
+            nextCard.style.transition = 'none'; // Temporarily disable transition for instant positioning
+            nextCard.style.transform = `translateX(${incomingDirection})`; // Place it off-screen
+            nextCard.style.opacity = '0'; // Make it invisible
+            nextCard.style.zIndex = '2'; // Ensure it will be on top when active
+
+            // 2. Force a "reflow" to apply the initial styles of nextCard immediately
+            void nextCard.offsetWidth;
+
+            // 3. Start the transition for the incoming card
+            nextCard.style.transition = 'transform 0.8s ease-in-out, opacity 0.8s ease-in-out'; // Re-enable transition
+            nextCard.style.transform = 'translateX(0)'; // Slide into the center
+            nextCard.style.opacity = '1'; // Appear gradually
+            nextCard.classList.add('active'); // Mark as active
+
+            // 4. Start the transition for the outgoing card (prevCard)
+            // Ensure prevCard goes behind and slides out
+            prevCard.style.zIndex = '1'; // Immediately send the old card to the back
+            prevCard.style.transition = 'transform 0.8s ease-in-out, opacity 0.8s ease-in-out'; // Apply transition
+            prevCard.style.transform = `translateX(${outgoingDirection})`; // Slide out
+            prevCard.style.opacity = '0'; // Fade out
+            prevCard.classList.remove('active'); // Remove active class
+
+            // 5. Update the current card index and refresh navigation elements
+            currentCardIndex = index;
+            updateButtons();
+            updateDots();
+        }
+
+        // Función para actualizar el estado de los botones (Anterior/Siguiente)
+        function updateButtons() {
+            prevBtn.disabled = currentCardIndex === 0;
+            nextBtn.disabled = currentCardIndex === cards.length - 1;
+        }
+
+        // Función para crear y actualizar los puntos de navegación
+        function updateDots() {
+            dotsContainer.innerHTML = '';
+            cards.forEach((_, i) => {
+                const dot = document.createElement('div');
+                dot.classList.add('dot');
+                if (i === currentCardIndex) {
+                    dot.classList.add('active');
+                }
+                dot.addEventListener('click', () => {
+                    showCard(i);
+                });
+                dotsContainer.appendChild(dot);
+            });
+        }
+
+        // Event Listeners para los botones de navegación
+        prevBtn.addEventListener('click', () => {
+            if (currentCardIndex > 0) {
+                showCard(currentCardIndex - 1);
             }
         });
 
-        // Listen for real-time updates on confirmed guests
-        if (window.db) {
-            const rsvpsCollectionRef = collection(window.db, `artifacts/${window.appId}/public/data/rsvps`);
-            const q = query(rsvpsCollectionRef, orderBy("timestamp", "desc"));
+        nextBtn.addEventListener('click', () => {
+            if (currentCardIndex < cards.length - 1) {
+                showCard(currentCardIndex + 1);
+            }
+        });
 
-            onSnapshot(q, (snapshot) => {
-                confirmedGuestsList.innerHTML = '';
-                snapshot.forEach((doc) => {
-                    const guest = doc.data();
-                    const listItem = document.createElement('li');
-                    listItem.textContent = guest.name;
-                    confirmedGuestsList.appendChild(listItem);
-                });
-            }, (error) => {
-                console.error("Error listening to RSVPs:", error);
-            });
-        }
+        // --- Funcionalidad de Agregar a Google Calendar (directo) ---
+        addToCalendarBtn.addEventListener('click', () => {
+            const googleCalUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(eventTitle)}&dates=${eventDate}T${eventTimeStart}/${eventDate}T${eventTimeEnd}&details=${encodeURIComponent(eventDescription)}&location=${encodeURIComponent(eventLocation)}&sf=true&output=xml`;
+            window.open(googleCalUrl, '_blank');
+        });
 
         // Inicializar la primera tarjeta y los botones/puntos al cargar la página
         showCard(currentCardIndex);
