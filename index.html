@@ -10,7 +10,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-auth.js";
-        import { getFirestore } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-firestore.js";
+        import { getFirestore, collection, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-firestore.js";
 
         // TU CONFIGURACIÓN DE FIREBASE (¡Esta es la que me diste!)
         const firebaseConfig = {
@@ -29,7 +29,9 @@
         window.currentUserId = null; // Se actualizará al autenticarse
         window.appId = firebaseConfig.appId; // Hacemos el appId global para usarlo en el path de Firestore
 
-        // Autenticación Anónima
+        console.log("Firebase inicializado.");
+
+        // Autenticación Anónima y configuración de listeners de Firestore
         onAuthStateChanged(window.auth, async (user) => {
             if (user) {
                 window.currentUserId = user.uid;
@@ -37,11 +39,52 @@
                 if (userIdDisplay) {
                     userIdDisplay.textContent = `Tu ID de usuario: ${window.currentUserId}`;
                 }
+                console.log("Usuario autenticado:", user.uid);
+
+                // --- Listen for real-time updates on confirmed guests (MOVIDO AQUÍ) ---
+                // Asegúrate de que db y appId estén disponibles antes de intentar escuchar
+                if (window.db && window.appId) {
+                    const rsvpsCollectionRef = collection(window.db, `artifacts/${window.appId}/public/data/rsvps`);
+                    // Se agrega orderBy() para ordenar por timestamp descendente
+                    const q = query(rsvpsCollectionRef, orderBy("timestamp", "desc")); 
+
+                    onSnapshot(q, (snapshot) => {
+                        const confirmedGuestsList = document.getElementById('confirmedGuestsList');
+                        const confirmedCount = document.getElementById('confirmedCount');
+                        if (confirmedGuestsList && confirmedCount) {
+                            confirmedGuestsList.innerHTML = '';
+                            let count = 0;
+                            snapshot.forEach((doc) => {
+                                const guest = doc.data();
+                                const listItem = document.createElement('li');
+                                listItem.textContent = guest.name;
+                                confirmedGuestsList.appendChild(listItem);
+                                count++;
+                            });
+                            confirmedCount.textContent = `Personas confirmadas: ${count}`;
+                            console.log("Lista de RSVPs actualizada. Conteo:", count);
+                        } else {
+                            console.warn("Elementos de lista de RSVPs no encontrados en el DOM.");
+                        }
+                    }, (error) => {
+                        console.error("Error listening to RSVPs:", error);
+                        const rsvpMessage = document.getElementById('rsvpMessage');
+                        if (rsvpMessage) {
+                            rsvpMessage.textContent = "Error al cargar las confirmaciones. Verifica los permisos de Firebase.";
+                            rsvpMessage.style.color = "red";
+                        }
+                    });
+                    console.log("Listener de RSVPs configurado.");
+                } else {
+                    console.warn("Firestore o AppId no están listos para configurar el listener de RSVPs.");
+                }
+
             } else {
+                console.log("No hay usuario autenticado, intentando autenticación anónima...");
                 try {
                     await signInAnonymously(window.auth);
                 } catch (error) {
-                    console.error("Error during Firebase authentication:", error);
+                    console.error("Error durante la autenticación anónima de Firebase:", error);
                     const userIdDisplay = document.getElementById('userIdDisplay');
                     if (userIdDisplay) {
                         userIdDisplay.textContent = `Error de autenticación: ${error.message}`;
@@ -98,9 +141,9 @@
             height: 100%; /* La tarjeta ocupa el 100% de la altura de su padre (.card-container) */
             display: flex;
             flex-direction: column;
-            justify-content: center;
+            justify-content: flex-start; /* Alinea el contenido al inicio para permitir el scroll */
             align-items: center;
-            padding: 2rem;
+            padding: 1.5rem; /* Padding ligeramente reducido */
             text-align: center;
             background-color: #fff;
             opacity: 0;
@@ -109,7 +152,7 @@
             border-radius: 20px;
             box-sizing: border-box;
             z-index: 1; /* Z-index por defecto para todas las tarjetas */
-            overflow-y: auto; /* Permite desplazamiento vertical dentro de la tarjeta si el contenido es largo */
+            overflow-y: auto; /* Permite el desplazamiento vertical dentro de la tarjeta */
         }
         .card.active {
             opacity: 1;
@@ -290,18 +333,41 @@
             color: #b08d98; /* Color del placeholder */
         }
 
+        /* Estilos para la lista de invitados */
+        #confirmedGuestsList {
+            list-style-position: inside; /* Mueve los puntos dentro del contenido */
+            padding: 0 10px; /* Padding interno para la lista */
+            margin: 0; /* Eliminar margen por defecto de la lista */
+            width: 100%; /* Asegura que ocupe el ancho disponible */
+            text-align: left; /* Alinea el texto a la izquierda */
+            box-sizing: border-box;
+            max-height: 200px; /* Altura máxima para la lista dentro de la tarjeta */
+            overflow-y: auto; /* Desplazamiento solo para la lista si excede la altura */
+            border: 1px solid #f0e0e0; /* Borde sutil */
+            border-radius: 10px; /* Bordes redondeados */
+            margin-top: 1rem; /* Espacio superior */
+        }
+        #confirmedGuestsList li {
+            padding: 5px 0; /* Espaciado interno para cada elemento de la lista */
+            border-bottom: 1px dashed #eee; /* Línea divisoria sutil */
+            font-size: 1.0rem; /* Tamaño de fuente estándar para legibilidad */
+        }
+        #confirmedGuestsList li:last-child {
+            border-bottom: none; /* No hay línea en el último elemento */
+        }
+
         /* Estilos responsivos */
         @media (max-width: 768px) {
             .main-wrapper {
                 padding-top: 15px; /* Ajuste el padding superior para móviles */
-                padding-bottom: 95px; /* Aumentado para más espacio sobre los botones en móviles */
+                padding-bottom: 110px; /* Aumentado para más espacio sobre los botones en móviles */
                 padding-left: 10px;
                 padding-right: 10px;
             }
             .card-container {
                 width: 95%;
                 /* Ajusta la altura máxima para móviles, dejando espacio para los botones */
-                max-height: calc(100vh - 15px - 95px); /* 15px por padding-top del main-wrapper, 95px por padding-bottom del main-wrapper */
+                max-height: calc(100vh - 15px - 110px); /* 15px por padding-top del main-wrapper, 110px por padding-bottom del main-wrapper */
             }
             .card-title {
                 font-size: 2rem;
@@ -326,6 +392,10 @@
                 width: 35px;
                 height: 35px;
                 font-size: 1rem;
+            }
+            /* Ajuste de altura máxima para la lista en móviles, si es necesario */
+            #confirmedGuestsList {
+                max-height: 150px; /* Altura máxima para la lista en móviles */
             }
         }
     </style>
@@ -408,7 +478,7 @@
 
             <div class="card" id="card-6">
                 <div class="bunny-image-frame">
-                    <img src="79edd64efa5a15a3469567e8f913d768.jpg" alt="Conejita con calendario" class="bunny-image">
+                    <img src="c4.png" alt="Conejita con calendario" class="bunny-image">
                 </div>
                 <h1 class="card-title">¡Confirma Tu Asistencia!</h1>
                 <p class="card-text">
@@ -418,10 +488,11 @@
                     <input type="text" id="guestNameInput" placeholder="Tu nombre" class="w-full p-3 mb-4 text-center border-2 border-pink-200 rounded-lg focus:outline-none focus:border-pink-400 transition-all duration-300">
                     <button id="confirmRsvpBtn" class="action-button w-full">🎉 Confirmar Asistencia</button>
                     <p id="rsvpMessage" class="mt-4 text-sm font-semibold text-green-700"></p>
+                    <p id="confirmedCount" class="mt-2 text-sm font-bold text-gray-700">Personas confirmadas: 0</p>
                 </div>
                 <div class="mt-6 text-sm text-gray-500">
                     <p>Invitados confirmados:</p>
-                    <ul id="confirmedGuestsList" class="list-disc list-inside text-left mx-auto max-w-xs mt-2">
+                    <ul id="confirmedGuestsList">
                         </ul>
                 </div>
             </div>
@@ -437,8 +508,6 @@
     <script type="module">
         import { collection, addDoc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-firestore.js";
 
-        // Ahora puedes acceder a window.db, window.auth, window.currentUserId, window.appId
-        
         const cards = document.querySelectorAll('.card');
         const prevBtn = document.getElementById('prevBtn');
         const nextBtn = document.getElementById('nextBtn');
@@ -450,6 +519,7 @@
         const confirmRsvpBtn = document.getElementById('confirmRsvpBtn');
         const rsvpMessage = document.getElementById('rsvpMessage');
         const confirmedGuestsList = document.getElementById('confirmedGuestsList');
+        const confirmedCount = document.getElementById('confirmedCount'); 
 
         let currentCardIndex = 0;
         let isPlaying = false;
@@ -585,7 +655,6 @@
             }
 
             try {
-                // Usamos window.appId que hicimos global arriba
                 const rsvpsCollectionRef = collection(window.db, `artifacts/${window.appId}/public/data/rsvps`);
                 await addDoc(rsvpsCollectionRef, {
                     name: guestName,
@@ -595,30 +664,19 @@
                 rsvpMessage.textContent = `¡Gracias, ${guestName}! Tu asistencia ha sido confirmada.`;
                 rsvpMessage.style.color = "green";
                 guestNameInput.value = '';
+
+                // Desplazar la tarjeta activa al top después de agregar un nombre
+                const activeCard = cards[currentCardIndex];
+                if (activeCard) {
+                    activeCard.scrollTop = 0; 
+                }
+
             } catch (e) {
                 console.error("Error adding document: ", e);
                 rsvpMessage.textContent = "Hubo un error al confirmar tu asistencia. Intenta de nuevo.";
                 rsvpMessage.style.color = "red";
             }
         });
-
-        // Listen for real-time updates on confirmed guests
-        if (window.db && window.appId) { // Asegúrate de que db y appId estén disponibles
-            const rsvpsCollectionRef = collection(window.db, `artifacts/${window.appId}/public/data/rsvps`);
-            const q = query(rsvpsCollectionRef, orderBy("timestamp", "desc"));
-
-            onSnapshot(q, (snapshot) => {
-                confirmedGuestsList.innerHTML = '';
-                snapshot.forEach((doc) => {
-                    const guest = doc.data();
-                    const listItem = document.createElement('li');
-                    listItem.textContent = guest.name;
-                    confirmedGuestsList.appendChild(listItem);
-                });
-            }, (error) => {
-                console.error("Error listening to RSVPs:", error);
-            });
-        }
 
         // Inicializar la primera tarjeta y los botones/puntos al cargar la página
         showCard(currentCardIndex);
