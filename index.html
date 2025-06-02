@@ -6,6 +6,50 @@
     <title>Invitación Baby Shower</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@300;400;500;600;700&family=Dancing+Script:wght@400;700&display=swap" rel="stylesheet">
+    
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-auth.js";
+        import { getFirestore } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-firestore.js";
+
+        // TU CONFIGURACIÓN DE FIREBASE (¡Esta es la que me diste!)
+        const firebaseConfig = {
+            apiKey: "AIzaSyDa8xUmziIYohy8TymBrhRT4nVRcUMkvdE",
+            authDomain: "babyshowerela.firebaseapp.com",
+            projectId: "babyshowerela",
+            storageBucket: "babyshowerela.firebasestorage.app",
+            messagingSenderId: "848219577782",
+            appId: "1:848219577782:web:41bcb427e6f11c7ebeb517"
+        };
+
+        // Inicializa Firebase y haz las referencias globales
+        window.firebaseApp = initializeApp(firebaseConfig);
+        window.db = getFirestore(window.firebaseApp);
+        window.auth = getAuth(window.firebaseApp);
+        window.currentUserId = null; // Se actualizará al autenticarse
+        window.appId = firebaseConfig.appId; // Hacemos el appId global para usarlo en el path de Firestore
+
+        // Autenticación Anónima
+        onAuthStateChanged(window.auth, async (user) => {
+            if (user) {
+                window.currentUserId = user.uid;
+                const userIdDisplay = document.getElementById('userIdDisplay');
+                if (userIdDisplay) {
+                    userIdDisplay.textContent = `Tu ID de usuario: ${window.currentUserId}`;
+                }
+            } else {
+                try {
+                    await signInAnonymously(window.auth);
+                } catch (error) {
+                    console.error("Error during Firebase authentication:", error);
+                    const userIdDisplay = document.getElementById('userIdDisplay');
+                    if (userIdDisplay) {
+                        userIdDisplay.textContent = `Error de autenticación: ${error.message}`;
+                    }
+                }
+            }
+        });
+    </script>
     <style>
         body {
             background: linear-gradient(135deg, #fce4ec 0%, #f7e6e6 50%, #fce4ec 100%); /* Degradado suave */
@@ -99,7 +143,7 @@
             border-radius: 20px; /* Bordes redondeados para el marco */
             background: linear-gradient(45deg, #fce4ec, #f7e6e6); /* Degradado suave para el marco */
             padding: 10px; /* Espacio entre el marco y la imagen */
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1), 0 5px 10px rgba(0, 0, 0, 0.05); /* Sombra para el marco */
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1), 0 5px 15px rgba(0, 0, 0, 0.05); /* Sombra para el marco */
             margin-bottom: 1.5rem;
             display: flex;
             justify-content: center;
@@ -235,6 +279,16 @@
             background-color: #b76e79;
             transform: scale(1.05);
         }
+        /* Estilos para el input de nombre en RSVP */
+        #guestNameInput {
+            color: #6d4c4c; /* Color de texto que combine */
+            border: 1px solid #ffccdd; /* Borde más sutil */
+            background-color: #fff9fb; /* Fondo ligeramente rosa */
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.05); /* Sombra interna sutil */
+        }
+        #guestNameInput::placeholder {
+            color: #b08d98; /* Color del placeholder */
+        }
 
         /* Estilos responsivos */
         @media (max-width: 768px) {
@@ -351,15 +405,40 @@
                     la promesa divina que completa nuestras vidas.
                 </p>
             </div>
+
+            <div class="card" id="card-6">
+                <div class="bunny-image-frame">
+                    <img src="79edd64efa5a15a3469567e8f913d768.jpg" alt="Conejita con calendario" class="bunny-image">
+                </div>
+                <h1 class="card-title">¡Confirma Tu Asistencia!</h1>
+                <p class="card-text">
+                    Tu presencia es el mejor regalo. Por favor, confírmanos si podrás acompañarnos.
+                </p>
+                <div class="w-full max-w-xs mx-auto">
+                    <input type="text" id="guestNameInput" placeholder="Tu nombre" class="w-full p-3 mb-4 text-center border-2 border-pink-200 rounded-lg focus:outline-none focus:border-pink-400 transition-all duration-300">
+                    <button id="confirmRsvpBtn" class="action-button w-full">🎉 Confirmar Asistencia</button>
+                    <p id="rsvpMessage" class="mt-4 text-sm font-semibold text-green-700"></p>
+                </div>
+                <div class="mt-6 text-sm text-gray-500">
+                    <p>Invitados confirmados:</p>
+                    <ul id="confirmedGuestsList" class="list-disc list-inside text-left mx-auto max-w-xs mt-2">
+                        </ul>
+                </div>
+            </div>
         </div>
 
         <div class="navigation-buttons">
             <button id="prevBtn" class="nav-button" disabled>Anterior</button>
             <button id="nextBtn" class="nav-button">Siguiente</button>
         </div>
+        <div id="userIdDisplay" class="text-xs text-gray-400 mt-2"></div>
     </div>
 
-    <script>
+    <script type="module">
+        import { collection, addDoc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-firestore.js";
+
+        // Ahora puedes acceder a window.db, window.auth, window.currentUserId, window.appId
+        
         const cards = document.querySelectorAll('.card');
         const prevBtn = document.getElementById('prevBtn');
         const nextBtn = document.getElementById('nextBtn');
@@ -367,9 +446,14 @@
         const addToCalendarBtn = document.getElementById('addToCalendarBtn');
         const musicToggleBtn = document.getElementById('musicToggleBtn');
         const backgroundMusic = document.getElementById('backgroundMusic');
+        const guestNameInput = document.getElementById('guestNameInput');
+        const confirmRsvpBtn = document.getElementById('confirmRsvpBtn');
+        const rsvpMessage = document.getElementById('rsvpMessage');
+        const confirmedGuestsList = document.getElementById('confirmedGuestsList');
+
         let currentCardIndex = 0;
         let isPlaying = false;
-        let hasInteractedForMusic = false; // Nueva bandera para controlar la primera interacción
+        let hasInteractedForMusic = false;
 
         // Detalles del evento para el calendario
         const eventTitle = "Baby Shower de Ela";
@@ -379,92 +463,79 @@
         const eventTimeStart = "150000"; // HHMMSS (3:00 PM)
         const eventTimeEnd = "170000"; // HHMMSS (5:00 PM, 2 horas después)
 
-        // Nueva función para iniciar la música con la primera interacción
         function tryPlayMusic() {
             if (!hasInteractedForMusic) {
                 backgroundMusic.play().then(() => {
                     isPlaying = true;
-                    musicToggleBtn.textContent = '⏸️'; // Cambia a icono de pausa
-                    hasInteractedForMusic = true; // Marca que la música ya intentó reproducirse
-                    document.removeEventListener('click', tryPlayMusic); // Elimina el listener una vez que la música comienza
+                    musicToggleBtn.textContent = '⏸️';
+                    hasInteractedForMusic = true;
+                    document.removeEventListener('click', tryPlayMusic);
                 }).catch(error => {
                     console.warn("La reproducción de música fue bloqueada al primer clic:", error);
                     isPlaying = false;
-                    musicToggleBtn.textContent = '🎵'; // Vuelve a icono de música si falla
-                    // No eliminamos el listener si falla, para que futuros clics puedan intentarlo.
+                    musicToggleBtn.textContent = '🎵';
                 });
             }
         }
 
-        // Agrega el listener al documento para el primer clic
         document.addEventListener('click', tryPlayMusic);
 
-        // Función para alternar la música con el botón específico
         musicToggleBtn.addEventListener('click', (event) => {
-            event.stopPropagation(); // Evita que este clic active también el listener global si ya está activo
+            event.stopPropagation();
             if (isPlaying) {
                 backgroundMusic.pause();
-                musicToggleBtn.textContent = '🎵'; // Icono de música
+                musicToggleBtn.textContent = '🎵';
             } else {
                 backgroundMusic.play().then(() => {
-                    musicToggleBtn.textContent = '⏸️'; // Icono de pausa
-                    hasInteractedForMusic = true; // Asegura que la bandera esté en true
-                    document.removeEventListener('click', tryPlayMusic); // Elimina el listener global si aún no se ha hecho
+                    musicToggleBtn.textContent = '⏸️';
+                    hasInteractedForMusic = true;
+                    document.removeEventListener('click', tryPlayMusic);
                 }).catch(error => {
                     console.error("Error al intentar reproducir la música desde el botón:", error);
-                    alert("Para escuchar la música, por favor asegúrate de que el navegador lo permita (algunos requieren una interacción manual adicional).");
+                    rsvpMessage.textContent = "Para escuchar la música, por favor asegúrate de que el navegador lo permita (algunos requieren una interacción manual adicional).";
+                    rsvpMessage.style.color = "orange";
                 });
             }
             isPlaying = !isPlaying;
         });
 
-        // Función para mostrar la tarjeta actual
         function showCard(index) {
-            const prevCard = cards[currentCardIndex]; // Get the currently active card
-            const nextCard = cards[index]; // Get the card to show
+            const prevCard = cards[currentCardIndex];
+            const nextCard = cards[index];
 
-            if (!prevCard || !nextCard || prevCard === nextCard) return; // Prevent errors and no-op
+            if (!prevCard || !nextCard || prevCard === nextCard) return;
 
-            // Determine the direction for the slide animation
-            const incomingDirection = index > currentCardIndex ? '100%' : '-100%'; // New card comes from right/left
-            const outgoingDirection = index > currentCardIndex ? '-100%' : '100%'; // Old card goes to left/right
+            const incomingDirection = index > currentCardIndex ? '100%' : '-100%';
+            const outgoingDirection = index > currentCardIndex ? '-100%' : '100%';
 
-            // 1. Prepare the incoming card (nextCard) for its initial off-screen position
-            nextCard.style.transition = 'none'; // Temporarily disable transition for instant positioning
-            nextCard.style.transform = `translateX(${incomingDirection})`; // Place it off-screen
-            nextCard.style.opacity = '0'; // Make it invisible
-            nextCard.style.zIndex = '2'; // Ensure it will be on top when active
+            nextCard.style.transition = 'none';
+            nextCard.style.transform = `translateX(${incomingDirection})`;
+            nextCard.style.opacity = '0';
+            nextCard.style.zIndex = '2';
 
-            // 2. Force a "reflow" to apply the initial styles of nextCard immediately
             void nextCard.offsetWidth;
 
-            // 3. Start the transition for the incoming card
-            nextCard.style.transition = 'transform 0.8s ease-in-out, opacity 0.8s ease-in-out'; // Re-enable transition
-            nextCard.style.transform = 'translateX(0)'; // Slide into the center
-            nextCard.style.opacity = '1'; // Appear gradually
-            nextCard.classList.add('active'); // Mark as active
+            nextCard.style.transition = 'transform 0.8s ease-in-out, opacity 0.8s ease-in-out';
+            nextCard.style.transform = 'translateX(0)';
+            nextCard.style.opacity = '1';
+            nextCard.classList.add('active');
 
-            // 4. Start the transition for the outgoing card (prevCard)
-            // Ensure prevCard goes behind and slides out
-            prevCard.style.zIndex = '1'; // Immediately send the old card to the back
-            prevCard.style.transition = 'transform 0.8s ease-in-out, opacity 0.8s ease-in-out'; // Apply transition
-            prevCard.style.transform = `translateX(${outgoingDirection})`; // Slide out
-            prevCard.style.opacity = '0'; // Fade out
-            prevCard.classList.remove('active'); // Remove active class
+            prevCard.style.zIndex = '1';
+            prevCard.style.transition = 'transform 0.8s ease-in-out, opacity 0.8s ease-in-out';
+            prevCard.style.transform = `translateX(${outgoingDirection})`;
+            prevCard.style.opacity = '0';
+            prevCard.classList.remove('active');
 
-            // 5. Update the current card index and refresh navigation elements
             currentCardIndex = index;
             updateButtons();
             updateDots();
         }
 
-        // Función para actualizar el estado de los botones (Anterior/Siguiente)
         function updateButtons() {
             prevBtn.disabled = currentCardIndex === 0;
             nextBtn.disabled = currentCardIndex === cards.length - 1;
         }
 
-        // Función para crear y actualizar los puntos de navegación
         function updateDots() {
             dotsContainer.innerHTML = '';
             cards.forEach((_, i) => {
@@ -480,7 +551,6 @@
             });
         }
 
-        // Event Listeners para los botones de navegación
         prevBtn.addEventListener('click', () => {
             if (currentCardIndex > 0) {
                 showCard(currentCardIndex - 1);
@@ -493,11 +563,62 @@
             }
         });
 
-        // --- Funcionalidad de Agregar a Google Calendar (directo) ---
         addToCalendarBtn.addEventListener('click', () => {
             const googleCalUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(eventTitle)}&dates=${eventDate}T${eventTimeStart}/${eventDate}T${eventTimeEnd}&details=${encodeURIComponent(eventDescription)}&location=${encodeURIComponent(eventLocation)}&sf=true&output=xml`;
             window.open(googleCalUrl, '_blank');
         });
+
+        // --- Funcionalidad de Confirmación de Asistencia (RSVP) ---
+        confirmRsvpBtn.addEventListener('click', async () => {
+            const guestName = guestNameInput.value.trim();
+            if (!guestName) {
+                rsvpMessage.textContent = "Por favor, ingresa tu nombre.";
+                rsvpMessage.style.color = "red";
+                return;
+            }
+
+            if (!window.db) {
+                rsvpMessage.textContent = "Error: Firebase no está inicializado. No se puede confirmar asistencia.";
+                rsvpMessage.style.color = "red";
+                console.error("Firestore is not initialized.");
+                return;
+            }
+
+            try {
+                // Usamos window.appId que hicimos global arriba
+                const rsvpsCollectionRef = collection(window.db, `artifacts/${window.appId}/public/data/rsvps`);
+                await addDoc(rsvpsCollectionRef, {
+                    name: guestName,
+                    timestamp: new Date(),
+                    userId: window.currentUserId
+                });
+                rsvpMessage.textContent = `¡Gracias, ${guestName}! Tu asistencia ha sido confirmada.`;
+                rsvpMessage.style.color = "green";
+                guestNameInput.value = '';
+            } catch (e) {
+                console.error("Error adding document: ", e);
+                rsvpMessage.textContent = "Hubo un error al confirmar tu asistencia. Intenta de nuevo.";
+                rsvpMessage.style.color = "red";
+            }
+        });
+
+        // Listen for real-time updates on confirmed guests
+        if (window.db && window.appId) { // Asegúrate de que db y appId estén disponibles
+            const rsvpsCollectionRef = collection(window.db, `artifacts/${window.appId}/public/data/rsvps`);
+            const q = query(rsvpsCollectionRef, orderBy("timestamp", "desc"));
+
+            onSnapshot(q, (snapshot) => {
+                confirmedGuestsList.innerHTML = '';
+                snapshot.forEach((doc) => {
+                    const guest = doc.data();
+                    const listItem = document.createElement('li');
+                    listItem.textContent = guest.name;
+                    confirmedGuestsList.appendChild(listItem);
+                });
+            }, (error) => {
+                console.error("Error listening to RSVPs:", error);
+            });
+        }
 
         // Inicializar la primera tarjeta y los botones/puntos al cargar la página
         showCard(currentCardIndex);
